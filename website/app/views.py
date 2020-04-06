@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, render_to_response
 from django.urls import reverse
 
 from app.opendropConfig import AirDropConfig, AirDropReceiverFlags
@@ -16,7 +16,7 @@ lock = threading.Lock()
 browser = AirDropBrowser(config)
 
 def index(request):
-    return HttpResponse("open drop")
+    return render_to_response("index.html")
 
 
 # action is receive
@@ -42,12 +42,11 @@ def find_stop(request):
     return HttpResponse(find_users)
 
 def find_list(request):
-    print("find_list")
-    # TODO: render to device list page.
+    # render to device list page.
     # TODO: can send request every one second to retrieve the find_users list
     #       from the frontend json file.
-    context = {}
-    return render(request, 'index.html', context)
+    context = {"devices": find_users}
+    return render(request, 'devices.json', context, content_type='application/json')
 
 def send(request):
     pass
@@ -97,9 +96,8 @@ def _send_discover(info):
     discover.append(node_info)
     if discoverable:
         res = 'Found  index {}  ID {}  name {}'.format(index, id, receiver_name)
-        find_users.append(res)
-        print(res)
+        find_users.append(receiver_name)
     else:
         res = 'Receiver ID {} is not discoverable'.format(id)
-        find_users.append(res)
+
     lock.release()
