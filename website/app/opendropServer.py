@@ -8,11 +8,11 @@ import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import os
-os.environ['LIBARCHIVE'] = '/usr/local/Cellar/libarchive/3.4.2/lib/libarchive.13.dylib'
+# os.environ['LIBARCHIVE'] = '/usr/local/Cellar/libarchive/3.4.2/lib/libarchive.13.dylib'
 
 import libarchive
-# import libarchive.extract
-# import libarchive.read
+import libarchive.extract
+import libarchive.read
 
 from app.opendropUtils import AirDropUtil
 from zeroconf import Zeroconf, ServiceInfo, IPVersion

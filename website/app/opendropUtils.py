@@ -15,20 +15,19 @@ os.environ['LIBARCHIVE'] = '/usr/local/Cellar/libarchive/3.4.2/lib/libarchive.13
 
 import libarchive
 
-# TODO: Modify import
-# from libarchive import ffi
-# from libarchive.entry import new_archive_entry, ArchiveEntry
-# from libarchive.ffi import (
-#     ARCHIVE_EOF,
-#     entry_sourcepath,
-#     entry_clear,
-#     read_next_header2,
-#     read_disk_descend,
-#     write_header,
-#     write_data,
-#     write_finish_entry,
-# )
-# from libarchive.write import ArchiveWrite, new_archive_read_disk
+from libarchive import ffi
+from libarchive.entry import new_archive_entry, ArchiveEntry
+from libarchive.ffi import (
+    ARCHIVE_EOF,
+    entry_sourcepath,
+    entry_clear,
+    read_next_header2,
+    read_disk_descend,
+    write_header,
+    write_data,
+    write_finish_entry,
+)
+from libarchive.write import ArchiveWrite, new_archive_read_disk
 
 
 class AirDropUtil:
@@ -212,40 +211,38 @@ class AirDropUtil:
             else:  # assume bytes-like
                 file.write(data)
 
-#  TODO: modify libarchive part
-# class AbsArchiveWrite(ArchiveWrite):
-class AbsArchiveWrite():
+class AbsArchiveWrite(ArchiveWrite):
     def add_abs_file(self, path, store_path):
         """
         Read the given paths from disk and add them to the archive.
         """
         write_p = self._pointer
 
-        # block_size = ffi.write_get_bytes_per_block(write_p)
-        # if block_size <= 0:
-        #     block_size = 10240  # pragma: no cover
+        block_size = ffi.write_get_bytes_per_block(write_p)
+        if block_size <= 0:
+            block_size = 10240  # pragma: no cover
 
-        # with new_archive_entry() as entry_p:
-        #     entry = ArchiveEntry(None, entry_p)
-        #     with new_archive_read_disk(path) as read_p:
-        #         while True:
-        #             r = read_next_header2(read_p, entry_p)
-        #             if r == ARCHIVE_EOF:
-        #                 break
-        #             entry.pathname = store_path
-        #             read_disk_descend(read_p)
-        #             write_header(write_p, entry_p)
-        #             try:
-        #                 with open(entry_sourcepath(entry_p), 'rb') as f:
-        #                     while True:
-        #                         data = f.read(block_size)
-        #                         if not data:
-        #                             break
-        #                         write_data(write_p, data, len(data))
-        #             except IOError as e:
-        #                 if e.errno != 21:
-        #                     raise  # pragma: no cover
-        #             write_finish_entry(write_p)
-        #             entry_clear(entry_p)
-        #             if os.path.isdir(path):
-        #                 break
+        with new_archive_entry() as entry_p:
+            entry = ArchiveEntry(None, entry_p)
+            with new_archive_read_disk(path) as read_p:
+                while True:
+                    r = read_next_header2(read_p, entry_p)
+                    if r == ARCHIVE_EOF:
+                        break
+                    entry.pathname = store_path
+                    read_disk_descend(read_p)
+                    write_header(write_p, entry_p)
+                    try:
+                        with open(entry_sourcepath(entry_p), 'rb') as f:
+                            while True:
+                                data = f.read(block_size)
+                                if not data:
+                                    break
+                                write_data(write_p, data, len(data))
+                    except IOError as e:
+                        if e.errno != 21:
+                            raise  # pragma: no cover
+                    write_finish_entry(write_p)
+                    entry_clear(entry_p)
+                    if os.path.isdir(path):
+                        break
