@@ -12,7 +12,22 @@ $( document ).ready(function() {
     });
 
     $('#search-stop').on('click', function(event) {
-      clearInterval(startSearch);
+      $.get("/app/find_stop")
+        .done(function(data) {
+          clearInterval(startSearch);
+      }); 
+    });
+
+    $('#open').on('click', function(event) {
+      $.get("/app/receive")
+        .done(function(data) {
+      }); 
+    });
+
+    $('#close').on('click', function(event) {
+      $.get("/app/receive_stop")
+        .done(function(data) {
+      }); 
     });
 
     function getDeviceList() {

@@ -91,6 +91,7 @@ class AirDropClient:
         AirDropUtil.write_debug(self.config, response_bytes, 'send_{}_response.plist'.format(url.lower().strip('/')))
 
         if http_resp.status != 200:
+            print(http_resp.status)
             status = False
             logger.debug('{} request failed: {}'.format(url, http_resp.status))
         else:
@@ -125,20 +126,28 @@ class AirDropClient:
             file_path = [file_path]
 
         # generate icon for first file
-        with open(file_path[0], 'rb') as f:
-            file_header = f.read(128)
-            flp = fleep.get(file_header)
-            if not icon and len(flp.mime) > 0 and 'image' in flp.mime[0]:
-                icon = AirDropUtil.generate_file_icon(f.name)
+        if os.path.isfile(file_path[0]):
+            with open(file_path[0], 'rb') as f:
+                file_header = f.read(128)
+                flp = fleep.get(file_header)
+                if not icon and len(flp.mime) > 0 and 'image' in flp.mime[0]:
+                    icon = AirDropUtil.generate_file_icon(f.name)
         if icon:
             ask_body['FileIcon'] = icon
 
         def file_entries(files):
             for file in files:
                 file_name = os.path.basename(file)
+                file_type = 'public.content'
+                if os.path.isfile(file):
+                    with open(file, 'rb') as f:
+                        file_header = f.read(128)
+                        flp = fleep.get(file_header)
+                        file_type = AirDropUtil.get_uti_type(flp)
+            
                 file_entry = {
                     'FileName': file_name,
-                    'FileType': AirDropUtil.get_uti_type(flp),
+                    'FileType': file_type,
                     'FileBomPath': os.path.join('.', file_name),
                     'FileIsDirectory': os.path.isdir(file_name),
                     'ConvertMediaFormats': 0
@@ -154,20 +163,38 @@ class AirDropClient:
         return success
 
     def send_upload(self, file_path):
+        if isinstance(file_path, str):
+            file_path = [file_path]
         """
         Send a file to a receiver.
         """
         headers = {
             'Content-Type': 'application/x-cpio',
         }
+        
+        file_list = []
+        for file in file_path:
+            if os.path.isfile(file):
+                file_list.append(file)
+            elif os.path.isdir(file):
+                file_list.append(file)
+                for r, d, f in os.walk(file):
+                    for i in f:
+                        file_list.append(os.path.join(r, i))
+        
+        if os.path.isdir(file_list[0]):
+            base_path = os.path.basename(file_list[0])
 
         # Create archive in memory ...
         stream = io.BytesIO()
         with libarchive.custom_writer(stream.write, 'cpio', filter_name='gzip',
                                       archive_write_class=AbsArchiveWrite) as archive:
-            for f in [file_path]:
+            for f in file_list:
                 ff = os.path.basename(f)
-                archive.add_abs_file(f, os.path.join('.', ff))
+                if ff == base_path:
+                    archive.add_abs_file(f, os.path.join('.', ff))
+                else:
+                    archive.add_abs_file(f, os.path.join(base_path, ff))
         stream.seek(0)
 
         # ... then send in chunked mode

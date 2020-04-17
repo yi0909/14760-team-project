@@ -11,7 +11,7 @@ from PIL import Image, ExifTags
 from ctypescrypto import cms, x509, pkey, oid
 
 import os
-os.environ['LIBARCHIVE'] = '/usr/local/Cellar/libarchive/3.4.2/lib/libarchive.13.dylib'
+# os.environ['LIBARCHIVE'] = '/usr/local/Cellar/libarchive/3.4.2/lib/libarchive.13.dylib'
 
 import libarchive
 

@@ -252,7 +252,7 @@ class AirDropServerHandler(BaseHTTPRequestHandler):
             """
 
             with libarchive.stream_reader(stream) as archive:
-                libarchive.extract_entries(archive, flags)
+                libarchive.extract.extract_entries(archive, flags)
 
         logger.info('Receiving file(s) ...')
         start = time.time()

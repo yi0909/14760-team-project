@@ -13,20 +13,30 @@ find_users = []
 config = AirDropConfig()
 discover = []
 lock = threading.Lock()
-browser = AirDropBrowser(config)
+browsers = []
+servers = []
 
 def index(request):
     return render_to_response("index.html")
 
 
-# action is receive
+# action is receive, can be found by others
 def receive(request):
     server = AirDropServer(config)
-    server.start_service()
-    server.start_server()
-    pass
+    servers.append(server)
+    _start_receive(server)
+    return HttpResponse(status=200)
+
+def receive_close(request):
+    if servers[0]:
+        servers[0].stop()
+
+    return HttpResponse(status=200)
+
 
 def find(request):
+    browser = AirDropBrowser(config)
+    browsers.append(browser)
     find_users = []
     browser.start(callback_add=_found_receiver)
 
@@ -37,7 +47,8 @@ def find(request):
 
 
 def find_stop(request):
-    browser.stop()
+    if browsers[0]:
+        browsers[0].stop()
 
     return HttpResponse(find_users)
 
@@ -51,6 +62,14 @@ def find_list(request):
 def send(request):
     pass
 
+
+def _start_receive(server):
+    thread = threading.Thread(target= _receive_service, args=(server, ))
+    thread.start()
+
+def _receive_service(server):
+    server.start_service()
+    server.start_server()
 
 def _found_receiver(info):
     thread = threading.Thread(target=_send_discover, args=(info, ))
@@ -96,7 +115,8 @@ def _send_discover(info):
     discover.append(node_info)
     if discoverable:
         res = 'Found  index {}  ID {}  name {}'.format(index, id, receiver_name)
-        find_users.append(receiver_name)
+        if receiver_name not in find_users:
+            find_users.append(receiver_name)
     else:
         res = 'Receiver ID {} is not discoverable'.format(id)
 
