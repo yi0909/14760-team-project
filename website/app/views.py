@@ -11,13 +11,15 @@ import requests
 
 find_users = []
 config = AirDropConfig()
+client = AirDropClient()
 discover = []
 lock = threading.Lock()
 browsers = []
 servers = []
 
 def index(request):
-    return render_to_response("index.html")
+    # return render_to_response("index.html")
+    return render(request, 'index.html')
 
 
 # action is receive, can be found by others
@@ -60,6 +62,20 @@ def find_list(request):
     return render(request, 'devices.json', context, content_type='application/json')
 
 def send(request):
+    pass
+
+def upload_file(request):
+    if request.method == "POST":
+        print("upload file")
+        print(request.FILES)
+        print("---------------")
+        print(request.POST)
+        print(request.POST['receiver_name_1'])
+        print("----------------")
+        client.send_ask(request.FILES, )
+        return redirect(reverse("index"))
+
+def upload_dir(request):
     pass
 
 

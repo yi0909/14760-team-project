@@ -9,4 +9,6 @@ urlpatterns = [
     path('find_stop', views.find_stop, name='find_stop'),
     path('receive', views.receive, name='receive'),
     path('receive_stop', views.receive_close, name='receive_close'),
+    path('upload_file', views.upload_file, name='upload_file'),
+    path('upload_dir', views.upload_dir, name='upload_dir'),
 ]

@@ -1,8 +1,20 @@
 $( document ).ready(function() {
   var startSearch = null;
+  var receiver = null;
     $('#devices').on('click', '.clickable-row', function(event) {
       $(this).addClass('bg-primary').siblings().removeClass('bg-primary');
+      var clickedBtnID = $(this).attr('id'); // or var clickedBtnID = this.id
+      alert('you clicked on button # ' + clickedBtnID);
+      receiver = clickedBtnID;
+      $("#receiver_name_1").val(receiver);
+      $("#receiver_name_2").val(receiver);
     });
+
+    // $('#submit_file').on('click', function(event) {
+    //   $('#upload_file_form').action = "{% url 'upload_file' %}";
+    //   $('#upload_file_form').submit();
+
+    // });
 
     $('#search').on('click', function(event) {
       $.get("/app/find")
@@ -42,9 +54,10 @@ $( document ).ready(function() {
       for(var i = 0; i < data.devices.length; i++) {
         console.log(data.devices[i])
         var name = data.devices[i].name;
-        var row = $("<tr class='clickable-row'>").appendTo("#devices");
+        var row = $("<tr class='clickable-row' id='"+ name +"'>").appendTo("#devices");
         $("<th>" + name + "</th>").appendTo(row);
         $("</tr>").appendTo("#devices");
     }
   }
+
 });
