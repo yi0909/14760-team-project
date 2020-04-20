@@ -5,6 +5,8 @@ import platform
 import plistlib
 import socket
 import time
+import tkinter as tk
+from tkinter import messagebox
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import os
@@ -108,11 +110,11 @@ class AirDropServerHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     config = None
 
-    def _set_response(self, content_length):
+    def _set_response(self, code, content_length):
         """
         Setting the default values for a successful response
         """
-        self.send_response(200)
+        self.send_response(code)
         self.send_header('Content-Length', content_length)
         self.end_headers()
 
@@ -130,7 +132,7 @@ class AirDropServerHandler(BaseHTTPRequestHandler):
         """
         logger.debug('GET request at {}'.format(self.path))
         body = '\n'.encode('utf-8')
-        self._set_response(len(body))
+        self._set_response(200, len(body))
         self.wfile.write(body)
 
     def handle_discover(self):
@@ -183,7 +185,7 @@ class AirDropServerHandler(BaseHTTPRequestHandler):
         AirDropUtil.write_debug(self.config, discover_answer_binary, 'receive_discover_response.plist')
 
         # Change to actual length
-        self._set_response(len(discover_answer_binary))
+        self._set_response(200, len(discover_answer_binary))
         self.wfile.write(discover_answer_binary)
 
     def handle_ask(self):
@@ -195,10 +197,26 @@ class AirDropServerHandler(BaseHTTPRequestHandler):
         ask_response = {'ReceiverModelName': self.config.computer_model, 'ReceiverComputerName': self.config.computer_name}
         ask_resp_binary = plistlib.dumps(ask_response, fmt=plistlib.FMT_BINARY)
 
-        AirDropUtil.write_debug(self.config, ask_resp_binary, 'receive_ask_response.plist')
+        user = plistlib.loads(post_data)['SenderComputerName']
+        files = plistlib.loads(post_data)['Files']
+        file_cnt = len(files)
+        file_name = files[0]['FileName']
+        if file_cnt > 1:
+            text = "{} wants to share {} and other {} files with you" .format(user, file_name, file_cnt-1)
+        if file_cnt == 1:
+            text = "{} wants to share {} with you" .format(user, file_name)
+        title = "send request"
+        code = os.system("""
+              osascript -e 'display dialog "{}" with title "{}"'
+              """.format(text, title))
+        if code == 0:
+            AirDropUtil.write_debug(self.config, ask_resp_binary, 'receive_ask_response.plist')
 
-        self._set_response(len(ask_resp_binary))
-        self.wfile.write(ask_resp_binary)
+            self._set_response(200, len(ask_resp_binary))
+            self.wfile.write(ask_resp_binary)
+        else:
+            self._set_response(500, 0)
+            
 
     def handle_upload(self):
         if self.headers.get('content-type', '').lower() != 'application/x-cpio':
@@ -284,7 +302,7 @@ class AirDropServerHandler(BaseHTTPRequestHandler):
             self.handle_upload()
         else:
             answer = 'POST request for {}'.format(self.path).encode('utf-8')
-            self._set_response(len(answer))
+            self._set_response(200, len(answer))
             self.wfile.write(answer)
 
     def log_message(self, format, *args):
