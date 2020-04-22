@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect, render_to_response
+from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from app.opendropConfig import AirDropConfig, AirDropReceiverFlags
@@ -17,7 +17,7 @@ browsers = []
 servers = []
 
 def index(request):
-    return render_to_response("index.html")
+    return render(request, "index.html")
 
 
 # action is receive, can be found by others

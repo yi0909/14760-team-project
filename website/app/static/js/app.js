@@ -19,12 +19,16 @@ $( document ).ready(function() {
     });
 
     $('#open').on('click', function(event) {
+      $(this).removeClass('btn-outline-secondary').addClass('btn-outline-primary');
+      $('#close').removeClass('btn-outline-primary').addClass('btn-outline-secondary');
       $.get("/app/receive")
         .done(function(data) {
       }); 
     });
 
     $('#close').on('click', function(event) {
+      $(this).removeClass('btn-outline-secondary').addClass('btn-outline-primary');
+      $('#open').removeClass('btn-outline-primary').addClass('btn-outline-secondary');
       $.get("/app/receive_stop")
         .done(function(data) {
       }); 
