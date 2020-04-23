@@ -31,10 +31,14 @@
           <div class="col-lg-12 text-center">
             <h1 class="mt-5">OpenDrop Demo</h1>
               <br><br>
+            <div>
+                <p>Allow me to be discovered by:
+                    <button class="btn btn-outline-secondary" id="open">Everyone</button>
+                    <button class="btn btn-outline-primary" id="close">None</button>
+                </p>
+            </div>
             <button class="btn btn-md btn-primary" id="search">Search devices nearby ↓</button>
             <button class="btn btn-md btn-primary" id="search-stop">Stop Searching</button>
-            <button class="btn btn-md btn-primary" id="open">Open</button>
-            <button class="btn btn-md btn-primary" id="close">Close</button>
               <br><br>
             <table id="devices" class="col-lg-4 table table-bordered table-hover mx-auto">
                 {% for device in devices %}
