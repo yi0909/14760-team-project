@@ -111,7 +111,7 @@ class AirDropClient:
         # if name is returned, then receiver is discoverable
         return response.get('ReceiverComputerName')
 
-    def send_ask(self, file_path, icon=None, type="single"):
+    def send_ask(self, file_path, icon=None):
         ask_body = {
             'SenderComputerName': self.config.computer_name,
             'BundleID': 'com.apple.finder',
@@ -122,9 +122,15 @@ class AirDropClient:
         if self.config.record_data:
             ask_body['SenderRecordData'] = self.config.record_data
 
-        # if type != "multiple":
-        if isinstance(file_path, str):
-            file_path = [file_path]
+        fl = file_path.split(",")
+        if len(fl) == 1:
+            if isinstance(file_path, str):
+                file_path = [file_path]
+        else:
+            file_path = fl
+
+        print("__________")
+        print(file_path)
 
         # generate icon for first file
         if os.path.isfile(file_path[0]):
@@ -163,47 +169,22 @@ class AirDropClient:
 
         return success
 
-    def _send_ask(self, file_path, file_bytes, icon=None):
-        ask_body = {
-            'SenderComputerName': self.config.computer_name,
-            'BundleID': 'com.apple.finder',
-            'SenderModelName': self.config.computer_model,
-            'SenderID': self.config.service_id,
-            'ConvertMediaFormats': False,
-        }
-        if self.config.record_data:
-            ask_body['SenderRecordData'] = self.config.record_data
-
-        def _file_entries(file_path, file_bytes):
-            file_entry = {
-                    'FileName': file_path,
-                    'FileType': 'public.content',
-                    'FileBomPath': os.path.join('.', file_path),
-                    'FileIsDirectory': False,
-                    'ConvertMediaFormats': 0
-                }
-            yield file_entry
-
-        ask_body['Files'] = [e for e in _file_entries(file_path, file_bytes)]
-        ask_body['Items'] = []
-
-        ask_binary = plistlib.dumps(ask_body, fmt=plistlib.FMT_BINARY)
-        success, _ = self.send_POST('/Ask', ask_binary)
-
-        return success
-
 
     def send_upload(self, file_path):
-        if isinstance(file_path, str):
-            file_path = [file_path]
+        # if isinstance(file_path, str):
+        #     file_path = [file_path]
+        fl = file_path.split(",")
+        if len(fl) == 1:
+            if isinstance(file_path, str):
+                file_path = [file_path]
+        else:
+            file_path = fl
         """
         Send a file to a receiver.
         """
         headers = {
             'Content-Type': 'application/x-cpio',
         }
-
-        base_path = ""
         
         file_list = []
         for file in file_path:
@@ -214,7 +195,9 @@ class AirDropClient:
                 for r, d, f in os.walk(file):
                     for i in f:
                         file_list.append(os.path.join(r, i))
-        
+
+        print(file_list)
+        base_path = '.'
         if os.path.isdir(file_list[0]):
             base_path = os.path.basename(file_list[0])
 

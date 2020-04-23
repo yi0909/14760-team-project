@@ -10,7 +10,7 @@ import threading
 import requests
 import os, sys
 import subprocess
-
+from subprocess import CalledProcessError
 
 from tkinter import * 
 from tkinter import filedialog
@@ -68,90 +68,69 @@ def find_list(request):
     context = {"devices": find_users}
     return render(request, 'devices.json', context, content_type='application/json')
 
-def send(request):
-    pass
+def send(request, client, file_path):
+    print('Asking receiver to accept ...')
+    if not client.send_ask(file_path):
+        os.system("""
+            osascript -e 'display dialog "{}" with title "{}"'
+            """.format("Receiver declined", "Warning"))
+        print('Receiver declined')
+        
+    print('Receiver accepted')
+    print('Uploading file ...')
+    if not client.send_upload(file_path):
+        print('Uploading has failed')
+        os.system("""
+            osascript -e 'display dialog "{}" with title "{}"'
+            """.format("Uploading has failed", "Warning"))
+    print('Uploading has been successful')
+    
+    os.system("""
+              osascript -e 'display dialog "{}" with title "{}"'
+              """.format("Uploading has been successful", "Notification"))
+
+    return render(request, 'index.html')
+
+def upload_folder(request):
+    if request.method == "POST":
+        print("upload folder")
+        receiver_name = request.POST['receiver_name_2']
+        client = AirDropClient(config, host_dict[receiver_name])
+        textOfMyScript = """osascript<<END
+        set theOutputFolder to choose folder with prompt "Please select an output folder:"
+        """
+        try:
+            result = subprocess.check_output(textOfMyScript, shell=True)
+        
+            file_path = str(result)[20:-4].replace(":", "/")
+            print(file_path)
+            
+            send(request, client, file_path)
+            return render(request, 'index.html')
+        except CalledProcessError:
+            return render(request, 'index.html')
 
 def upload_file(request):
     if request.method == "POST":
         print("upload file")
-        print(request.FILES)
-        print("-----------------------------")
-        # print(type(request.FILES).read())  # <class 'bytes'>
-        # print(request.FILES['file_field'].read())
-        print("---------------")
-        # print(request.POST)
-        # print(request.POST['receiver_name_1'])
         receiver_name = request.POST['receiver_name_1']
-        print("----------------")
-        print(host_dict)
-        print("----------------")
-        print(host_dict[receiver_name])
+
         client = AirDropClient(config, host_dict[receiver_name])
-        # file_path = "/Users/wangqian/Documents/证件照/" + request.FILES['file_field'].name
-        # file_bytes = request.FILES['file_field'].read()
-
-        # var = os.system("""
-        #       osascript -e 'set theDocument to choose file with prompt "Please select a document to process:"'
-        #       """)
-        # print("++++++++++++++++++++")
-        # print(var)
-        # print("++++++++++++++++++++")
-        
-
-        # textOfMyScript = """osascript<<END
-        # set theDocument to choose file with prompt "Please select some document to process:" with multiple selections allowed
-        # """
 
         textOfMyScript = """osascript<<END
-        set theOutputFolder to choose folder with prompt "Please select an output folder:"
+        set theDocument to choose file with prompt "Please select some document to process:" with multiple selections allowed
         """
-
-        # myScript = NSAppleScript.initWithSource_(NSAppleScript.alloc(), textOfMyScript)
-        # results, err = myScript.executeAndReturnError_(None)
-
-        # myWord = results.stringValue()
-
-        
-        
-        # response = str(os.system(textOfMyScript))
-
-        
-        batcmd="dir"
-        print("++++++++++++++++++++")
-        result = subprocess.check_output(textOfMyScript, shell=True)
-        
-        print("++++++++++++++++++++")
-        result = str(result)
-        print(result)
-        # file_paths = result.split(",")
-        
-        file_path = str(result)[20:-3].replace(":", "/")
-        print(file_path)
-        
-        
-        print('Asking receiver to accept ...')
-        if not client.send_ask(file_path):
-            os.system("""
-              osascript -e 'display dialog "{}" with title "{}"'
-              """.format("Receiver declined", "Warning"))
-            print('Receiver declined')
+        try:
+            result = subprocess.check_output(textOfMyScript, shell=True)
             
-        print('Receiver accepted')
-        print('Uploading file ...')
-        if not client.send_upload(file_path):
-            print('Uploading has failed')
-            os.system("""
-              osascript -e 'display dialog "{}" with title "{}"'
-              """.format("Uploading has failed", "Warning"))
-        print('Uploading has been successful')
-       
-        print("~~~~~~~~~~~~~~~~~")
-
-    os.system("""
-              osascript -e 'display dialog "{}" with title "{}"'
-              """.format("Uploading has been successful", "Notification"))
-    return render(request, 'index.html')
-    # return redirect(reverse("index"))
+            file_path = str(result)[20:-3].replace(":", "/")
+            file_path = file_path.replace(" alias Macintosh HD", "")
+            print(file_path)
+            
+            send(request, client, file_path)
+            return render(request, 'index.html')
+        except CalledProcessError:
+            return render(request, 'index.html')
 
 def upload_dir(request):
     pass

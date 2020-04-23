@@ -1,19 +1,16 @@
 $( document ).ready(function() {
   $("#submit_file").hide();
+  $("#submit_folder").hide();
   var startSearch = null;
 
     $('#devices').on('click', '.clickable-row', function(event) {
       $(this).addClass('bg-primary').siblings().removeClass('bg-primary');
       var clickedBtnID = $(this).attr('id'); // or var clickedBtnID = this.id
       $("#receiver_name_1").val(clickedBtnID);
+      $("#receiver_name_2").val(clickedBtnID);
       $("#submit_file").show();
+      $("#submit_folder").show();
     });
-
-    // $('#submit_file').on('click', function(event) {
-    //   $('#upload_file_form').action = "{% url 'upload_file' %}";
-    //   $('#upload_file_form').submit();
-
-    // });
 
     $('#search').on('click', function(event) {
       $.get("/app/find")
