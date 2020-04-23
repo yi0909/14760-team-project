@@ -1,13 +1,12 @@
 $( document ).ready(function() {
+  $("#submit_file").hide();
   var startSearch = null;
-  var receiver = null;
+
     $('#devices').on('click', '.clickable-row', function(event) {
       $(this).addClass('bg-primary').siblings().removeClass('bg-primary');
       var clickedBtnID = $(this).attr('id'); // or var clickedBtnID = this.id
-      alert('you clicked on button # ' + clickedBtnID);
-      receiver = clickedBtnID;
-      $("#receiver_name_1").val(receiver);
-      $("#receiver_name_2").val(receiver);
+      $("#receiver_name_1").val(clickedBtnID);
+      $("#submit_file").show();
     });
 
     // $('#submit_file').on('click', function(event) {

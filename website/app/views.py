@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect, render_to_response
+from django.shortcuts import render, redirect#, render_to_response
 from django.urls import reverse
 
 from app.opendropConfig import AirDropConfig, AirDropReceiverFlags
@@ -8,14 +8,22 @@ from app.opendropClient import AirDropBrowser, AirDropClient
 
 import threading
 import requests
+import os, sys
+import subprocess
+
+
+from tkinter import * 
+from tkinter import filedialog
+from tkinter.ttk import *
 
 find_users = []
 config = AirDropConfig()
-client = AirDropClient()
+host_dict = {}
 discover = []
 lock = threading.Lock()
 browsers = []
 servers = []
+  
 
 def index(request):
     # return render_to_response("index.html")
@@ -68,16 +76,86 @@ def upload_file(request):
     if request.method == "POST":
         print("upload file")
         print(request.FILES)
+        print("-----------------------------")
+        # print(type(request.FILES).read())  # <class 'bytes'>
+        # print(request.FILES['file_field'].read())
         print("---------------")
-        print(request.POST)
-        print(request.POST['receiver_name_1'])
+        # print(request.POST)
+        # print(request.POST['receiver_name_1'])
+        receiver_name = request.POST['receiver_name_1']
         print("----------------")
-        client.send_ask(request.FILES, )
-        return redirect(reverse("index"))
+        print(host_dict)
+        print("----------------")
+        print(host_dict[receiver_name])
+        client = AirDropClient(config, host_dict[receiver_name])
+        # file_path = "/Users/wangqian/Documents/证件照/" + request.FILES['file_field'].name
+        # file_bytes = request.FILES['file_field'].read()
+
+        # var = os.system("""
+        #       osascript -e 'set theDocument to choose file with prompt "Please select a document to process:"'
+        #       """)
+        # print("++++++++++++++++++++")
+        # print(var)
+        # print("++++++++++++++++++++")
+        
+
+        # textOfMyScript = """osascript<<END
+        # set theDocument to choose file with prompt "Please select some document to process:" with multiple selections allowed
+        # """
+
+        textOfMyScript = """osascript<<END
+        set theOutputFolder to choose folder with prompt "Please select an output folder:"
+        """
+
+        # myScript = NSAppleScript.initWithSource_(NSAppleScript.alloc(), textOfMyScript)
+        # results, err = myScript.executeAndReturnError_(None)
+
+        # myWord = results.stringValue()
+
+        
+        
+        # response = str(os.system(textOfMyScript))
+
+        
+        batcmd="dir"
+        print("++++++++++++++++++++")
+        result = subprocess.check_output(textOfMyScript, shell=True)
+        
+        print("++++++++++++++++++++")
+        result = str(result)
+        print(result)
+        # file_paths = result.split(",")
+        
+        file_path = str(result)[20:-3].replace(":", "/")
+        print(file_path)
+        
+        
+        print('Asking receiver to accept ...')
+        if not client.send_ask(file_path):
+            os.system("""
+              osascript -e 'display dialog "{}" with title "{}"'
+              """.format("Receiver declined", "Warning"))
+            print('Receiver declined')
+            
+        print('Receiver accepted')
+        print('Uploading file ...')
+        if not client.send_upload(file_path):
+            print('Uploading has failed')
+            os.system("""
+              osascript -e 'display dialog "{}" with title "{}"'
+              """.format("Uploading has failed", "Warning"))
+        print('Uploading has been successful')
+       
+        print("~~~~~~~~~~~~~~~~~")
+
+    os.system("""
+              osascript -e 'display dialog "{}" with title "{}"'
+              """.format("Uploading has been successful", "Notification"))
+    return render(request, 'index.html')
+    # return redirect(reverse("index"))
 
 def upload_dir(request):
     pass
-
 
 def _start_receive(server):
     thread = threading.Thread(target= _receive_service, args=(server, ))
@@ -133,6 +211,7 @@ def _send_discover(info):
         res = 'Found  index {}  ID {}  name {}'.format(index, id, receiver_name)
         if receiver_name not in find_users:
             find_users.append(receiver_name)
+            host_dict[receiver_name] = [address, port]
     else:
         res = 'Receiver ID {} is not discoverable'.format(id)
 

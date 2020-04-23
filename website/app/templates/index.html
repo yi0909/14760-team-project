@@ -48,17 +48,41 @@
 
           <br><br>
 
-        <div class="col-lg-6 mx-auto input-group">
+
+        <!-- <div>
+            <input type="file" onchange="CopyMe(this, 'txtFileName');" />
+        </div>
+        <div>
+            You chose: <input id="txtFileName" type="text" readonly="readonly" />
+        </div> -->
+
+       
+
+        <!-- <div class="col-lg-6 mx-auto input-group">
           <div>
-            <!-- action="{% url 'upload_file' %}" -->
           <form method='POST' id="upload_file_form" enctype="multipart/form-data" action="{% url 'upload_file' %}">
-            <input type="file" id="file_input" name="file_field" />
+            <input type="file" id="fileUpload" name="file_path">
             <input type="text" id="directories" name="directories" hidden />
             <input type="text" id="receiver_name_1" name="receiver_name_1" hidden/>
             <button id="submit_file" class="btn btn-secondary">Submit</buton>
           </form>
           </div>
+        </div> -->
 
+         <div class="col-lg-1 mx-auto input-group">
+          <div>
+          <form method='POST' id="upload_file_form" enctype="multipart/form-data" action="{% url 'upload_file' %}">
+            <!-- <input type="file" id="file_input" name="file_field" /> -->
+            <!-- <input type="text" id="directories" name="directories" hidden /> -->
+            
+            <button id="submit_file" class="btn btn-secondary">Upload File</buton>
+            <input type="text" id="receiver_name_1" name="receiver_name_1" hidden/>
+          </form>
+          </div>
+         </div>
+         
+
+          <!--
           <br><br>
           <form method='POST' enctype="multipart/form-data" action="{% url 'upload_dir' %}">
             <input type="file" id="file_input" name="file_field" webkitdirectory directory/>
@@ -67,7 +91,7 @@
             <input type="submit" class="btn btn-secondary"/>
           </form>
         </div>
-      </div>
+      </div> -->
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery.js"></script>
@@ -75,17 +99,31 @@
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script> -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     <script>
-      files = document.querySelector("#file_input").files;
-      document.querySelector("#file_input").addEventListener("change", function() {
-         files = document.querySelector("#file_input").files;
-         var directories = {}
-         for (var file of files) {
-           file.webkitRelativePath
-           directories[file.name] = file.webkitRelativePath
-         }
-         directories = JSON.stringify(directories);
-         document.querySelector("#directories").value = directories
-      });
+      // files = document.querySelector("#file_input").files;
+      // document.querySelector("#file_input").addEventListener("change", function() {
+      //    files = document.querySelector("#file_input").files;
+      //    var directories = {}
+      //    for (var file of files) {
+      //      file.webkitRelativePath
+      //      directories[file.name] = file.webkitRelativePath
+      //    }
+      //    directories = JSON.stringify(directories);
+      //    document.querySelector("#directories").value = directories
+      // });
+
+      
      </script>
+     <script>
+      //  function CopyMe(oFileInput, sTargetID) {
+      //     var arrTemp = oFileInput.value.split('\\');
+      //     document.getElementById(sTargetID).value = arrTemp[arrTemp.length - 1];
+      //   }
+
+        $('input[type=file]').change(function () {
+          console.log(this.files[0].mozFullPath);
+        });
+     </script>
+
+     
   </body>
 </html>

@@ -70,7 +70,7 @@ class AirDropClient:
         self.http_conn = None
 
     def send_POST(self, url, body, headers=None):
-        logger.debug('Send {} request'.format(url))
+        print('Send {} request'.format(url))
 
         AirDropUtil.write_debug(self.config, body, 'send_{}_request.plist'.format(url.lower().strip('/')))
 
@@ -93,10 +93,10 @@ class AirDropClient:
         if http_resp.status != 200:
             print(http_resp.status)
             status = False
-            logger.debug('{} request failed: {}'.format(url, http_resp.status))
+            print('{} request failed: {}'.format(url, http_resp.status))
         else:
             status = True
-            logger.debug('{} request successful'.format(url))
+            print('{} request successful'.format(url))
         return status, response_bytes
 
     def send_discover(self):
@@ -111,7 +111,7 @@ class AirDropClient:
         # if name is returned, then receiver is discoverable
         return response.get('ReceiverComputerName')
 
-    def send_ask(self, file_path, icon=None):
+    def send_ask(self, file_path, icon=None, type="single"):
         ask_body = {
             'SenderComputerName': self.config.computer_name,
             'BundleID': 'com.apple.finder',
@@ -122,6 +122,7 @@ class AirDropClient:
         if self.config.record_data:
             ask_body['SenderRecordData'] = self.config.record_data
 
+        # if type != "multiple":
         if isinstance(file_path, str):
             file_path = [file_path]
 
@@ -162,6 +163,36 @@ class AirDropClient:
 
         return success
 
+    def _send_ask(self, file_path, file_bytes, icon=None):
+        ask_body = {
+            'SenderComputerName': self.config.computer_name,
+            'BundleID': 'com.apple.finder',
+            'SenderModelName': self.config.computer_model,
+            'SenderID': self.config.service_id,
+            'ConvertMediaFormats': False,
+        }
+        if self.config.record_data:
+            ask_body['SenderRecordData'] = self.config.record_data
+
+        def _file_entries(file_path, file_bytes):
+            file_entry = {
+                    'FileName': file_path,
+                    'FileType': 'public.content',
+                    'FileBomPath': os.path.join('.', file_path),
+                    'FileIsDirectory': False,
+                    'ConvertMediaFormats': 0
+                }
+            yield file_entry
+
+        ask_body['Files'] = [e for e in _file_entries(file_path, file_bytes)]
+        ask_body['Items'] = []
+
+        ask_binary = plistlib.dumps(ask_body, fmt=plistlib.FMT_BINARY)
+        success, _ = self.send_POST('/Ask', ask_binary)
+
+        return success
+
+
     def send_upload(self, file_path):
         if isinstance(file_path, str):
             file_path = [file_path]
@@ -171,6 +202,8 @@ class AirDropClient:
         headers = {
             'Content-Type': 'application/x-cpio',
         }
+
+        base_path = ""
         
         file_list = []
         for file in file_path:
@@ -198,6 +231,29 @@ class AirDropClient:
         stream.seek(0)
 
         # ... then send in chunked mode
+        success, _ = self.send_POST('/Upload', stream, headers=headers)
+
+        # TODO better: write archive chunk whenever send_POST does a read to avoid having the whole archive in memory
+
+        return success
+
+    def _send_upload(self, file_path, file_bytes):
+        """
+        Send a file to a receiver.
+        """
+        
+        headers = {
+            'Content-Type': 'application/x-cpio',
+        }
+        
+        stream = io.BytesIO(file_bytes)
+        print("type: " + str(type(file_bytes)))
+        # with stream as f:
+        #     f.write(file_bytes)
+        #     stream.seek(0)
+        #     success, _ = self.send_POST('/Upload', stream, headers=headers)
+        #     print("slskdls " + success)
+        stream.seek(0)
         success, _ = self.send_POST('/Upload', stream, headers=headers)
 
         # TODO better: write archive chunk whenever send_POST does a read to avoid having the whole archive in memory
